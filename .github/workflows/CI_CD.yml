@@ -1,4 +1,4 @@
-name: CI/CD Rust Local (Self-Hosted)
+name: CI/CD Rust
 
 on:
   push:
@@ -6,6 +6,23 @@ on:
       - main
 
 jobs:
+  setup_dependencies:
+    name: Instalar Dependências de Sistema
+    runs-on: [self-hosted, Linux]
+
+    steps:
+
+      - name: Atualizar e instalar dependências básicas
+        run: sudo apt-get update && sudo apt-get install -y build-essential docker.io
+
+      - name: Iniciar serviço Docker
+        run: |
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
+      - name: Verificar Docker
+        run: docker --version
+
   build:
     name: Build Rust Project
     runs-on: [self-hosted, Linux]
@@ -13,9 +30,6 @@ jobs:
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
-
-      - name: Instalar dependências de sistema
-        run: sudo apt-get update && sudo apt-get install -y build-essential
 
       - name: Instalar Rust
         uses: actions-rs/toolchain@v1
@@ -41,7 +55,7 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Cargo Test
+      - name: Run Test
         run: cargo test --all --release
 
   docker_build:
