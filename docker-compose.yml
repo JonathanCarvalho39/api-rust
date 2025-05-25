@@ -1,0 +1,9 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    container_name: aula_pipeline
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

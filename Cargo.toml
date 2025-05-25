@@ -1,8 +1,11 @@
 [package]
 name = "aula_pipeline"
-path = "src/lib.rs"
 version = "0.1.0"
 edition = "2024"
+
+[[bin]]
+name = "aula_pipeline"
+path = "src/main.rs"
 
 [dependencies]
 axum = "0.6"
@@ -10,3 +13,4 @@ tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 hyper = "0.14"
+sysinfo = "0.29"
