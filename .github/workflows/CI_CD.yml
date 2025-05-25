@@ -1,0 +1,54 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-app:
+    name: Build Api-RUST
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Vite React App
+        run: npm run build
+
+  push-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build-app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: docker build -t jonathancarvalho039/front-end-app:latest .
+
+      - name: Push Docker image
+        run: docker push jonathancarvalho039/front-end-app:latest
+
+  deploy:
+    name: Deploy
+    runs-on: [self-hosted, Linux]
+    needs: push-image
+
+    steps:
+      - name: Pull latest image and restart container
+        run: |
+          sudo docker ps -aq | xargs -r sudo docker stop
+          sudo docker ps -aq | xargs -r sudo docker rm
+          sudo docker run -d -p 80:80 --name front-end-app jonathancarvalho039/front-end-app:latest
