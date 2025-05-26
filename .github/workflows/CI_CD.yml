@@ -3,16 +3,25 @@ name: CI/CD Rust
 on:
   push:
     branches:
+      - qa
+      - hml
       - main
 
 jobs:
-  dependencies:
+  setup_dependencies:
     name: Instalar Dependências de Sistema
-    runs-on: [self-hosted, Linux]
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Atualizar e instalar dependências básicas
-        run: sudo apt-get update && sudo apt-get install -y build-essential docker.io
+      - name: Instalar Docker e build-essential
+        run: |
+          sudo apt-get update
+          sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
+          sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io build-essential
 
       - name: Iniciar serviço Docker
         run: |
@@ -24,8 +33,8 @@ jobs:
 
   build:
     name: Build Rust Project
-    runs-on: [self-hosted, Linux]
-    needs: dependencies
+    runs-on: ubuntu-latest
+    needs: setup_dependencies
 
     steps:
       - name: Checkout código
@@ -42,7 +51,7 @@ jobs:
 
   test:
     name: Test Rust
-    runs-on: [self-hosted, Linux]
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -58,28 +67,93 @@ jobs:
       - name: Run Test
         run: cargo test --all --release
 
-  docker_build:
-    name: Build Docker Image
-    runs-on: [self-hosted, Linux]
+  deploy_qa:
+    name: Deploy to QA
+    runs-on: [self-hosted, qa-machine]
     needs: test
+    if: github.ref == 'refs/heads/qa'
 
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v3
+    - name: Checkout código
+      uses: actions/checkout@v3
 
-      - name: Build Docker Image
-        run: sudo docker build -t rust-app-local:latest .
+    - name: Instalar Dependências
+      run: |
+        if ! command -v docker &> /dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+        fi
 
-  deploy:
-    name: Deploy Container Locally
-    runs-on: [self-hosted, Linux]
-    needs: docker_build
+    - name: Build Docker Image localmente
+      run: sudo docker build -t rust-app-local:latest .
+
+
+    - name: Parar e remover container antigo em QA
+      run: |
+        sudo docker stop rust-app || true
+        sudo docker rm rust-app || true
+
+    - name: Rodar novo container em QA
+      run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
+
+  deploy_hml:
+    name: Deploy to HML
+    runs-on: [self-hosted, hml-machine]
+    needs: test
+    if: github.ref == 'refs/heads/hml'
 
     steps:
-      - name: Parar e remover container antigo
-        run: |
-          sudo docker stop rust-app || true
-          sudo docker rm rust-app || true
+    - name: Checkout código
+      uses: actions/checkout@v3
 
-      - name: Rodar novo container
-        run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
+    - name: Instalar Dependências
+      run: |
+        if ! command -v docker &> /dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+        fi
+
+    - name: Build Docker Image localmente
+      run: sudo docker build -t rust-app-local:latest .
+
+    - name: Parar e remover container antigo em HML
+      run: |
+        sudo docker stop rust-app || true
+        sudo docker rm rust-app || true
+
+    - name: Rodar novo container em HML
+      run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
+
+  deploy_prod:
+    name: Deploy to Production
+    runs-on: [self-hosted, prod-machine]
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Instalar Dependências
+      run: |
+        if ! command -v docker &> /dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+        fi
+
+    - name: Build Docker Image localmente
+      run: sudo docker build -t rust-app-local:latest .
+
+    - name: Parar e remover container antigo em PROD
+      run: |
+        sudo docker stop rust-app || true
+        sudo docker rm rust-app || true
+
+    - name: Rodar novo container em PROD
+      run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
