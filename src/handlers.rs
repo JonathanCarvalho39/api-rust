@@ -90,7 +90,7 @@ pub async fn health_check() -> impl IntoResponse {
         }
     };
 
-    let overall_status = if memory_status.status == "DOWN" || cpu_status.status == "DOWN" {
+    let overall_status = if memory_status.status == "DOWN" && cpu_status.status == "DOWN" {
         "DOWN"
     } else {
         "UP"
