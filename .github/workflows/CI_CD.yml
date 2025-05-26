@@ -6,12 +6,11 @@ on:
       - main
 
 jobs:
-  setup_dependencies:
+  dependencies:
     name: Instalar Dependências de Sistema
     runs-on: [self-hosted, Linux]
 
     steps:
-
       - name: Atualizar e instalar dependências básicas
         run: sudo apt-get update && sudo apt-get install -y build-essential docker.io
 
@@ -26,6 +25,7 @@ jobs:
   build:
     name: Build Rust Project
     runs-on: [self-hosted, Linux]
+    needs: dependencies
 
     steps:
       - name: Checkout código
