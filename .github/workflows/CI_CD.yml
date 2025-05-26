@@ -68,7 +68,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build Docker Image
-        run: docker build -t rust-app-local:latest .
+        run: sudo docker build -t rust-app-local:latest .
 
   deploy:
     name: Deploy Container Locally
@@ -78,8 +78,8 @@ jobs:
     steps:
       - name: Parar e remover container antigo
         run: |
-          docker stop rust-app || true
-          docker rm rust-app || true
+          sudo docker stop rust-app || true
+          sudo docker rm rust-app || true
 
       - name: Rodar novo container
-        run: docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
+        run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
