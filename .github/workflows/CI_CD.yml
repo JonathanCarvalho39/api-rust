@@ -63,7 +63,6 @@ jobs:
   deploy_qa:
     name: Deploy to QA
     runs-on: [self-hosted, qa-machine]
-    needs: docker_build
     if: github.ref == 'refs/heads/qa'
 
     steps:
@@ -93,7 +92,6 @@ jobs:
   deploy_hml:
     name: Deploy to HML
     runs-on: [self-hosted, hml-machine]
-    needs: docker_build
     if: github.ref == 'refs/heads/hml'
 
     steps:
@@ -123,7 +121,6 @@ jobs:
   deploy_prod:
     name: Deploy to Production
     runs-on: [self-hosted, prod-machine]
-    needs: docker_build
     if: github.ref == 'refs/heads/main'
 
     steps:
@@ -147,5 +144,5 @@ jobs:
         docker stop rust-app || true
         docker rm rust-app || true
 
-    - name: Rodar novo container em HML
+    - name: Rodar novo container em PROD
       run: docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
