@@ -86,6 +86,9 @@ jobs:
           sudo systemctl enable docker
         fi
 
+    - name: Limpar recursos Docker não utilizados
+      run: sudo docker system prune -af
+
     - name: Build Docker Image localmente
       run: sudo docker build -t rust-app-local:latest .
 
@@ -116,6 +119,9 @@ jobs:
           sudo systemctl enable docker
         fi
 
+    - name: Limpar recursos Docker não utilizados
+      run: sudo docker system prune -af
+
     - name: Build Docker Image localmente
       run: sudo docker build -t rust-app-local:latest .
 
@@ -128,7 +134,7 @@ jobs:
       run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
 
   deploy_prod:
-    name: Deploy to Production
+    name: Deploy to PROD
     runs-on: [self-hosted, prod-machine]
     needs: test
     if: github.ref == 'refs/heads/main'
@@ -145,6 +151,9 @@ jobs:
           sudo systemctl start docker
           sudo systemctl enable docker
         fi
+
+    - name: Limpar recursos Docker não utilizados
+      run: sudo docker system prune -af
 
     - name: Build Docker Image localmente
       run: sudo docker build -t rust-app-local:latest .
