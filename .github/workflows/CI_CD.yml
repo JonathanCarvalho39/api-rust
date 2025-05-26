@@ -87,15 +87,15 @@ jobs:
         fi
 
     - name: Build Docker Image localmente
-      run: docker build -t rust-app-local:latest .
+      run: sudo docker build -t rust-app-local:latest .
 
     - name: Parar e remover container antigo em QA
       run: |
-        docker stop rust-app || true
-        docker rm rust-app || true
+        sudo docker stop rust-app || true
+        sudo docker rm rust-app || true
 
     - name: Rodar novo container em QA
-      run: docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
+      run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
 
   deploy_hml:
     name: Deploy to HML
@@ -117,15 +117,15 @@ jobs:
         fi
 
     - name: Build Docker Image localmente
-      run: docker build -t rust-app-local:latest .
+      run: sudo docker build -t rust-app-local:latest .
 
     - name: Parar e remover container antigo em HML
       run: |
-        docker stop rust-app || true
-        docker rm rust-app || true
+        sudo docker stop rust-app || true
+        sudo docker rm rust-app || true
 
     - name: Rodar novo container em HML
-      run: docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
+      run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
 
   deploy_prod:
     name: Deploy to Production
@@ -147,12 +147,12 @@ jobs:
         fi
 
     - name: Build Docker Image localmente
-      run: docker build -t rust-app-local:latest .
+      run: sudo docker build -t rust-app-local:latest .
 
     - name: Parar e remover container antigo em PROD
       run: |
-        docker stop rust-app || true
-        docker rm rust-app || true
+        sudo docker stop rust-app || true
+        sudo docker rm rust-app || true
 
     - name: Rodar novo container em PROD
-      run: docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
+      run: sudo docker run -d -p 8080:8080 --name rust-app rust-app-local:latest
