@@ -9,20 +9,27 @@ on:
 
 jobs:
   setup_dependencies:
-    name: Instalar Dependências de Sistema
-    runs-on: ubuntu-latest
+  name: Instalar Dependências de Sistema
+  runs-on: ubuntu-latest
 
-    steps:
-      - name: Atualizar e instalar dependências básicas
-        run: sudo apt-get update && sudo apt-get install -y build-essential docker.io
+  steps:
+    - name: Instalar Docker e build-essential
+      run: |
+        sudo apt-get update
+        sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
+        sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io build-essential
 
-      - name: Iniciar serviço Docker
-        run: |
-          sudo systemctl start docker
-          sudo systemctl enable docker
+    - name: Iniciar serviço Docker
+      run: |
+        sudo systemctl start docker
+        sudo systemctl enable docker
 
-      - name: Verificar Docker
-        run: docker --version
+    - name: Verificar Docker
+      run: docker --version
 
   build:
     name: Build Rust Project
@@ -63,6 +70,7 @@ jobs:
   deploy_qa:
     name: Deploy to QA
     runs-on: [self-hosted, qa-machine]
+    needs: test
     if: github.ref == 'refs/heads/qa'
 
     steps:
@@ -92,6 +100,7 @@ jobs:
   deploy_hml:
     name: Deploy to HML
     runs-on: [self-hosted, hml-machine]
+    needs: test
     if: github.ref == 'refs/heads/hml'
 
     steps:
@@ -121,6 +130,7 @@ jobs:
   deploy_prod:
     name: Deploy to Production
     runs-on: [self-hosted, prod-machine]
+    needs: test
     if: github.ref == 'refs/heads/main'
 
     steps:
