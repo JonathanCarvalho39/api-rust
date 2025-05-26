@@ -89,6 +89,7 @@ jobs:
     - name: Build Docker Image localmente
       run: sudo docker build -t rust-app-local:latest .
 
+
     - name: Parar e remover container antigo em QA
       run: |
         sudo docker stop rust-app || true
